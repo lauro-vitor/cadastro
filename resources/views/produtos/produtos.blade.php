@@ -40,6 +40,7 @@
                         <h5 class="modal-title">Novo Produto</h5>
                     </div>
                     <div class="modal-body">
+                        <input type="hidden" id="id">
                         <div class="form-group">
                             <label for="nome">Nome:</label>
                             <input 
@@ -98,6 +99,7 @@
             }
         });
         function novoProduto(){
+            $('#id').val('');
             $('#idNome').val('');
             $('#idEstoque').val('');
             $('#idPreco').val('');
@@ -110,6 +112,7 @@
                 url: `/api/produtos/${id}`,
                 context: this,
                 success: function (){
+                    //comentar isso com Rodrigo
                     document.getElementById(id).textContent = '';
                 },
                 error: function (error){
@@ -132,7 +135,7 @@
         }
         function carregarProdutos(){
             $.getJSON('/api/produtos', function(produtos){
-                for(let i = 0; i < produtos.length; i++) {
+                for (let i = 0; i < produtos.length; i++) {
                     linha = montarLinha(produtos[i]);
                     $('#tabelaProdutos>tbody').append(linha);
                 }
@@ -145,13 +148,23 @@
                     '<td>' + produto.nome + '</td>' +
                     '<td>' + produto.estoque + '</td>' +
                     '<td>' + produto.preco + '</td>' +
-                    '<td>' + produto.categoria_id + '</td>' +
+                    '<td>' + produto.categoria.nome + '</td>' +
                     '<td>' +
                         '<button class="btn btn-primary mr-3" onClick="editar('+produto.id+')"> Editar </button>' +
                         '<button class="btn btn-danger" onClick="apagar('+produto.id+')" > Apagar </button>' +
                     '</td>' +
                 '<tr>'
             );
+        }
+        function editar(id){
+            $.getJSON(`api/produtos/${id}`, function(data){
+                $('#id').val(data.id);
+                $('#idNome').val(data.nome);
+                $('#idEstoque').val(data.estoque);
+                $('#idPreco').val(data.preco);
+                $('#idCategoria').val(data.categoria_id);
+                $('#dlgProdutos').modal('show');
+            });
         }
         function criarProduto() {
            prod = {
@@ -166,9 +179,56 @@
                 $('#tabelaProdutos>tbody').append(linha);
             });
         }
+        function salvarProduto(){
+            prod = {
+                id : $('#id').val(),
+                nome : $('#idNome').val(),
+                preco: $('#idPreco').val(),
+                estoque: $('#idEstoque').val(),
+                categoria_id: $('#idCategoria').val() 
+            }
+            $.ajax({
+                type: "PUT",
+                url: `/api/produtos/${prod.id}`,
+                data: prod,
+                context: this,
+                success: function (data) {
+                    produtoJson= JSON.parse(data);
+                    produto = document.getElementById(produtoJson.id);
+                    produto.cells[1].innerHTML = produtoJson.nome;
+                    produto.cells[2].innerHTML = produtoJson.estoque;
+                    produto.cells[3].innerHTML = produtoJson.preco;
+                    produto.cells[4].innerHTML = produtoJson.categoria.nome;
+                    /*
+                    isso foi o que o professor fez:
+
+                    prod = JSON.parse(data);
+                    linhas = $('#tabelaProdutos>tbody>tr');
+                    e = linhas.filter( function(i, e) { 
+                        return ( e.cells[0].textContent == prod.id );
+                    });
+                    if (e) {
+                        e[0].cells[0].textContent = prod.id;
+                        e[0].cells[1].textContent = prod.nome;
+                        e[0].cells[2].textContent = prod.estoque;
+                        e[0].cells[3].textContent = prod.preco;
+                        e[0].cells[4].textContent = prod.categoria_id;
+                    }*/
+                },
+                error: function (error){
+                    console.log(error)
+                }
+            });
+        }
         $('#formProduto').submit(function(event){
             event.preventDefault();
-            criarProduto();
+
+            if($('#id').val() != '') {
+                salvarProduto();
+            } else {
+                criarProduto();
+            }
+            
             $('#dlgProdutos').modal('hide');
         });
         
