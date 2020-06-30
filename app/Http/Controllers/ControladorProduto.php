@@ -42,16 +42,18 @@ class ControladorProduto extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    { 
+    {   
+        
         $produto = new Produto();
-        $produto->nome = $request->input('nomeNome');
-        $produto->estoque = $request->input('nomeEstoque');
-        $produto->preco = $request->input('nomePreco');
-        $categoria = Categoria::find($request->input('nomeCategoria'));
+        //no input deve ser os nomes dos campos do objeto passado no post
+        $produto->nome = $request->input('nome');
+        $produto->estoque = $request->input('preco');
+        $produto->preco = $request->input('estoque');
+        $categoria = Categoria::find($request->input('categoria_id'));
         $produto->categoria()->associate($categoria);
         $produto->save();
         //para remover a associação: categoria()->dissociate();
-        return redirect('/produtos');
+        return json_encode($produto);
     }
 
     /**
@@ -123,7 +125,8 @@ class ControladorProduto extends Controller
         if(isset($produto)) {
             $produto->categoria()->dissociate();
             $produto->delete();
+            return response('OK',200);
         }
-        return redirect('/produtos');
+        return response('Produto não encontrado', 404);
     }
 }
